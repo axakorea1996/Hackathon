@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>한울생명 - 가입 완료</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; min-height: 100vh; padding: 32px 16px; }
+ 
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 48px 36px;
+      max-width: 520px; margin: 0 auto;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+ 
+    .check-circle {
+      width: 72px; height: 72px;
+      background: #e8f5e9;
+      border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-bottom: 20px;
+      animation: pop .4s cubic-bezier(.36,2,.4,1);
+    }
+    @keyframes pop { 0%{transform:scale(0)} 100%{transform:scale(1)} }
+    .check-circle svg { width: 36px; height: 36px; }
+ 
+    h2 { font-size: 22px; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+    .sub { font-size: 14px; color: #888; margin-bottom: 32px; }
+ 
+    .receipt-box {
+      background: #f7f9fc;
+      border: 1.5px dashed #c8d8ea;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 28px;
+      text-align: left;
+    }
+    .receipt-no {
+      font-size: 22px; font-weight: 700;
+      color: #185FA5; text-align: center;
+      margin-bottom: 20px; letter-spacing: .05em;
+    }
+    .info-row {
+      display: flex; justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+      font-size: 13px;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-row .label { color: #888; }
+    .info-row .value { color: #1a1a2e; font-weight: 500; }
+ 
+    .notice {
+      background: #fff8e1;
+      border-left: 4px solid #f59e0b;
+      border-radius: 0 8px 8px 0;
+      padding: 12px 16px;
+      font-size: 13px; color: #78560a;
+      text-align: left; margin-bottom: 24px;
+      line-height: 1.6;
+    }
+ 
+    .btn {
+      display: inline-block;
+      padding: 13px 32px;
+      background: #185FA5; color: white;
+      border: none; border-radius: 10px;
+      font-size: 15px; font-weight: 600;
+      cursor: pointer; text-decoration: none;
+      transition: background .2s;
+    }
+    .btn:hover { background: #0C447C; }
+    .btn-outline {
+      background: white; color: #185FA5;
+      border: 1.5px solid #185FA5;
+      margin-left: 10px;
+    }
+    .btn-outline:hover { background: #f0f6ff; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="check-circle">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+ 
+    <h2>보험 가입이 완료되었습니다!</h2>
+    <p class="sub">청약이 정상적으로 접수되었습니다.<br>아래 접수번호를 꼭 보관해주세요.</p>
+ 
+    <div class="receipt-box">
+      <div class="receipt-no">{{ data.receipt }}</div>
+      <div class="info-row">
+        <span class="label">계약자</span>
+        <span class="value">{{ data.name }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">연락처</span>
+        <span class="value">{{ data.phone }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">이메일</span>
+        <span class="value">{{ data.email }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">선택 보장</span>
+        <span class="value">{{ data.coverage }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">청약 상태</span>
+        <span class="value" style="color:#2e7d32">접수 완료</span>
+      </div>
+    </div>
+ 
+    <div class="notice">
+      영업일 기준 3일 이내에 입력하신 이메일로<br>
+      보험증권이 발송될 예정입니다.
+    </div>
+ 
+    <a href="/apply" class="btn btn-outline">추가 청약</a>
+    <a href="/logout" class="btn">로그아웃</a>
+  </div>
+</body>
+</html>

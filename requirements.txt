@@ -1,0 +1,10 @@
+<<<<<<< HEAD
+fastapi
+uvicorn
+jinja2
+python-multipart
+=======
+uvicorn
+fastapi
+gunicorn
+>>>>>>> 104a69b08b29b83a31183e029e5e452a50e2ce22

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>한울생명 - 정보 확인 중</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 56px 40px;
+      max-width: 420px; width: 100%;
+      text-align: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+ 
+    .spinner-wrap { margin-bottom: 32px; }
+    .spinner {
+      width: 64px; height: 64px;
+      border: 5px solid #e8edf2;
+      border-top-color: #185FA5;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+ 
+    h2 { font-size: 20px; font-weight: 700; color: #1a1a2e; margin-bottom: 10px; }
+    .sub { font-size: 14px; color: #888; line-height: 1.6; margin-bottom: 32px; }
+ 
+    .steps { text-align: left; }
+    .step {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 13px;
+    }
+    .step:last-child { border-bottom: none; }
+    .step-icon {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; flex-shrink: 0;
+      background: #f0f4f8; color: #aaa;
+    }
+    .step-icon.done { background: #e8f5e9; color: #2e7d32; }
+    .step-icon.active { background: #e3f0ff; color: #185FA5; animation: pulse 1s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    .step-text { color: #444; }
+    .step-text.done { color: #2e7d32; }
+    .step-text.active { color: #185FA5; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="spinner-wrap">
+      <div class="spinner" id="spinner"></div>
+    </div>
+    <h2>정보를 확인하고 있습니다</h2>
+    <p class="sub">잠시만 기다려주세요.<br>청약 정보를 검토하고 있습니다.</p>
+ 
+    <div class="steps">
+      <div class="step" id="step1">
+        <div class="step-icon active" id="icon1">1</div>
+        <span class="step-text active" id="text1">계약자 정보 확인 중...</span>
+      </div>
+      <div class="step" id="step2">
+        <div class="step-icon" id="icon2">2</div>
+        <span class="step-text" id="text2">보장 조건 검토</span>
+      </div>
+      <div class="step" id="step3">
+        <div class="step-icon" id="icon3">3</div>
+        <span class="step-text" id="text3">청약 접수 처리</span>
+      </div>
+    </div>
+  </div>
+ 
+  <script>
+    const receipt = "{{ receipt }}";
+ 
+    function setDone(n) {
+      document.getElementById('icon'+n).className = 'step-icon done';
+      document.getElementById('icon'+n).textContent = '✓';
+      document.getElementById('text'+n).className = 'step-text done';
+    }
+    function setActive(n, msg) {
+      document.getElementById('icon'+n).className = 'step-icon active';
+      document.getElementById('icon'+n).textContent = n;
+      document.getElementById('text'+n).className = 'step-text active';
+      document.getElementById('text'+n).textContent = msg;
+    }
+ 
+    setTimeout(() => {
+      setDone(1);
+      setActive(2, '보장 조건 검토 중...');
+    }, 1200);
+ 
+    setTimeout(() => {
+      setDone(2);
+      setActive(3, '청약 접수 처리 중...');
+    }, 2400);
+ 
+    setTimeout(() => {
+      setDone(3);
+      document.getElementById('spinner').style.borderTopColor = '#2e7d32';
+      window.location.href = '/complete?receipt=' + receipt;
+    }, 3600);
+  </script>
+</body>
+</html>
