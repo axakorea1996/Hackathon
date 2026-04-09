@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>한울생명 - 회원가입</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .card { background: white; border-radius: 16px; padding: 48px 40px; width: 100%; max-width: 400px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+    .logo { text-align: center; margin-bottom: 28px; }
+    .logo h1 { font-size: 20px; font-weight: 600; color: #1a1a2e; }
+    .logo p { font-size: 13px; color: #888; margin-top: 4px; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 13px; color: #555; margin-bottom: 6px; font-weight: 500; }
+    .field input { width: 100%; padding: 11px 14px; border: 1.5px solid #e0e0e0; border-radius: 10px; font-size: 14px; outline: none; transition: border-color .2s; color: #1a1a2e; }
+    .field input:focus { border-color: #185FA5; }
+    .field input.is-error { border-color: #e74c3c; background: #fff8f8; }
+    .field-error { font-size: 12px; color: #e74c3c; margin-top: 5px; }
+    .field-hint { font-size: 11px; color: #aaa; margin-top: 4px; }
+    .btn { width: 100%; padding: 13px; background: #185FA5; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background .2s; margin-top: 4px; }
+    .btn:hover { background: #0C447C; }
+    .login-link { text-align: center; margin-top: 16px; font-size: 13px; color: #888; }
+    .login-link a { color: #185FA5; text-decoration: none; font-weight: 500; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <h1>한울생명</h1>
+      <p>신규 계정 만들기</p>
+    </div>
+ 
+    <form method="post" action="/register">
+      <div class="field">
+        <label>아이디</label>
+        <input type="text" name="user_id" placeholder="영문, 숫자, _ 포함 4~20자"
+               value="{{ user_id or '' }}"
+               class="{{ 'is-error' if errors and errors.user_id else '' }}" required>
+        {% if errors and errors.user_id %}
+        <div class="field-error">{{ errors.user_id }}</div>
+        {% else %}
+        <div class="field-hint">영문, 숫자, _만 사용 가능 (4~20자)</div>
+        {% endif %}
+      </div>
+ 
+      <div class="field">
+        <label>비밀번호</label>
+        <input type="password" name="password" placeholder="6자 이상"
+               class="{{ 'is-error' if errors and errors.password else '' }}" required>
+        {% if errors and errors.password %}
+        <div class="field-error">{{ errors.password }}</div>
+        {% else %}
+        <div class="field-hint">6자 이상 입력해주세요</div>
+        {% endif %}
+      </div>
+ 
+      <div class="field">
+        <label>비밀번호 확인</label>
+        <input type="password" name="password2" placeholder="비밀번호 재입력"
+               class="{{ 'is-error' if errors and errors.password2 else '' }}" required>
+        {% if errors and errors.password2 %}
+        <div class="field-error">{{ errors.password2 }}</div>
+        {% endif %}
+      </div>
+ 
+      <button type="submit" class="btn">가입하기</button>
+    </form>
+ 
+    <div class="login-link">
+      이미 계정이 있으신가요? <a href="/">로그인</a>
+    </div>
+  </div>
+</body>
+</html>

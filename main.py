@@ -1,10 +1,10 @@
 from fastapi import FastAPI, Request, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import create_engine, Column, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import random, string, os, re, time, html
+import random, string, os, re, time, html, secrets
 from datetime import datetime
 from collections import defaultdict
  
@@ -27,7 +27,7 @@ class User(Base):
 class Application(Base):
     __tablename__ = "applications"
     receipt    = Column(String, primary_key=True)
-    user_id    = Column(String, unique=True)   # 동일 사용자 중복 청약 방지
+    user_id    = Column(String)           # unique 제거 → 한 계정으로 여러 청약 가능
     name       = Column(String)
     birth      = Column(String)
     phone      = Column(String)
@@ -49,8 +49,6 @@ def init_users():
  
 init_users()
  
- 
-# ── 세션 & 유틸 ──────────────────────────────────────────
 sessions = {}
  
 def gen_token():
@@ -60,8 +58,7 @@ def gen_receipt():
     return "INS-" + ''.join(random.choices(string.digits, k=8))
  
  
-# ── Rate Limiting (메모리 기반) ───────────────────────────
-# IP당 로그인 시도 5회 / 60초 초과 시 차단
+# ── Rate Limiting ─────────────────────────────────────────
 login_attempts: dict = defaultdict(list)
  
 def is_rate_limited(ip: str) -> bool:
@@ -76,7 +73,6 @@ def is_rate_limited(ip: str) -> bool:
  
 # ── 입력값 새니타이징 ─────────────────────────────────────
 def sanitize(value: str) -> str:
-    """XSS 방지: HTML 특수문자 이스케이프"""
     return html.escape(value.strip()) if value else ""
  
 ALLOWED_COVERAGES = {
@@ -118,30 +114,33 @@ def validate_name(name: str) -> str | None:
         return "성명을 입력해주세요."
     if len(name.strip()) < 2:
         return "성명은 2자 이상 입력해주세요."
-    # 스크립트 태그 등 이상한 입력 차단
     if re.search(r"[<>{}\[\];]", name):
         return "성명에 특수문자를 사용할 수 없습니다."
     return None
  
  
-# ── 보안 헤더 미들웨어 ────────────────────────────────────
+# ── 보안 헤더 미들웨어 (nonce CSP) ───────────────────────
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
+    nonce = secrets.token_urlsafe(16)
+    request.state.csp_nonce = nonce
     response = await call_next(request)
-    # XSS 방어
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
-    # HTTPS 강제 (Render는 HTTPS 제공)
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    # 불필요한 서버 정보 숨기기
     response.headers["Server"] = "webserver"
-    # 콘텐츠 보안 정책
-    response.headers["Content-Security-Policy"] = "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'"
+    response.headers["Content-Security-Policy"] = (
+        f"default-src 'self'; "
+        f"style-src 'self' 'unsafe-inline'; "
+        f"script-src 'self' 'nonce-{nonce}'"
+    )
     return response
  
+def render(request: Request, template: str, context: dict = {}):
+    context["csp_nonce"] = request.state.csp_nonce
+    return templates.TemplateResponse(request, template, context)
  
-# ── 세션 유효성 체크 헬퍼 ─────────────────────────────────
 def get_session_user(request: Request) -> str | None:
     token = request.cookies.get("session_token")
     if not token or token not in sessions:
@@ -149,32 +148,26 @@ def get_session_user(request: Request) -> str | None:
     return sessions[token]["user_id"]
  
  
-# ── 라우트 ────────────────────────────────────────────────
+# ── 라우트: 로그인 ────────────────────────────────────────
 @app.get("/", response_class=HTMLResponse)
 async def login_page(request: Request):
-    return templates.TemplateResponse(request, "login.html", {})
+    return render(request, "login.html")
  
  
 @app.post("/login")
 async def login(request: Request, user_id: str = Form(...), password: str = Form(...)):
-    # Rate Limiting
     client_ip = request.client.host
     if is_rate_limited(client_ip):
-        return templates.TemplateResponse(request, "login.html", {
+        return render(request, "login.html", {
             "error": "로그인 시도가 너무 많습니다. 1분 후 다시 시도해주세요."
         })
  
-    # 입력값 새니타이징
     user_id  = sanitize(user_id)
     password = sanitize(password)
  
-    # 길이 제한 (지나치게 긴 입력 차단)
     if len(user_id) > 50 or len(password) > 100:
-        return templates.TemplateResponse(request, "login.html", {
-            "error": "입력값이 올바르지 않습니다."
-        })
+        return render(request, "login.html", {"error": "입력값이 올바르지 않습니다."})
  
-    # DB 조회 (SQLAlchemy ORM → SQL Injection 자동 방어)
     db = SessionLocal()
     user = db.query(User).filter(
         User.user_id == user_id,
@@ -183,15 +176,13 @@ async def login(request: Request, user_id: str = Form(...), password: str = Form
     db.close()
  
     if not user:
-        # 실패 메시지를 모호하게 → 어떤 항목이 틀렸는지 노출 안 함
-        return templates.TemplateResponse(request, "login.html", {
+        return render(request, "login.html", {
             "error": "아이디 또는 비밀번호가 올바르지 않습니다."
         })
  
     token = gen_token()
     sessions[token] = {"user_id": user_id}
     response = RedirectResponse(url="/apply", status_code=302)
-    # HttpOnly: JS에서 쿠키 접근 차단, SameSite: CSRF 방어
     response.set_cookie(
         key="session_token", value=token,
         httponly=True, samesite="lax", secure=True
@@ -199,25 +190,60 @@ async def login(request: Request, user_id: str = Form(...), password: str = Form
     return response
  
  
+# ── 라우트: 회원가입 ──────────────────────────────────────
+@app.get("/register", response_class=HTMLResponse)
+async def register_page(request: Request):
+    return render(request, "register.html")
+ 
+ 
+@app.post("/register")
+async def register(
+    request: Request,
+    user_id:   str = Form(...),
+    password:  str = Form(...),
+    password2: str = Form(...)
+):
+    user_id   = sanitize(user_id)
+    password  = sanitize(password)
+    password2 = sanitize(password2)
+ 
+    errors = {}
+ 
+    if not re.fullmatch(r"[a-zA-Z0-9_]{4,20}", user_id):
+        errors["user_id"] = "아이디는 영문, 숫자, _만 사용 가능하며 4~20자여야 합니다."
+    if len(password) < 6:
+        errors["password"] = "비밀번호는 6자 이상이어야 합니다."
+    if password != password2:
+        errors["password2"] = "비밀번호가 일치하지 않습니다."
+ 
+    if errors:
+        return render(request, "register.html", {"errors": errors, "user_id": user_id})
+ 
+    db = SessionLocal()
+    existing = db.query(User).filter(User.user_id == user_id).first()
+    if existing:
+        db.close()
+        return render(request, "register.html", {
+            "errors": {"user_id": "이미 사용 중인 아이디입니다."},
+            "user_id": user_id
+        })
+ 
+    db.add(User(user_id=user_id, password=password))
+    db.commit()
+    db.close()
+ 
+    return render(request, "login.html", {
+        "success": f"회원가입이 완료되었습니다. {user_id}로 로그인해주세요."
+    })
+ 
+ 
+# ── 라우트: 청약 ──────────────────────────────────────────
 @app.get("/apply", response_class=HTMLResponse)
 async def apply_page(request: Request):
     user_id = get_session_user(request)
     if not user_id:
         return RedirectResponse(url="/")
- 
-    # 이미 청약한 사용자 확인
-    db = SessionLocal()
-    existing = db.query(Application).filter(Application.user_id == user_id).first()
-    db.close()
- 
-    if existing:
-        return templates.TemplateResponse(request, "apply.html", {
-            "user_id": user_id,
-            "already_applied": True,
-            "receipt": existing.receipt
-        })
- 
-    return templates.TemplateResponse(request, "apply.html", {"user_id": user_id})
+    return render(request, "apply.html", {"user_id": user_id})
  
  
 @app.post("/apply")
@@ -234,38 +260,47 @@ async def apply_submit(
     if not user_id:
         return RedirectResponse(url="/")
  
-    # ── 중복 청약 방지 (DB 레벨 재확인) ──
-    db = SessionLocal()
-    existing = db.query(Application).filter(Application.user_id == user_id).first()
-    db.close()
-    if existing:
-        return RedirectResponse(url=f"/complete?receipt={existing.receipt}", status_code=302)
- 
-    # ── 허용된 보장 항목만 통과 (파라미터 변조 방지) ──
     if coverage not in ALLOWED_COVERAGES:
         raise HTTPException(status_code=400, detail="올바르지 않은 보장 항목입니다.")
  
-    # ── 입력값 새니타이징 ──
     name  = sanitize(name)
-    birth = sanitize(birth)
+    birth = sanitize(re.sub(r"[-.\s]", "", birth))  # 생년월일 하이픈 제거 후 저장
     phone = sanitize(phone)
     email = sanitize(email.lower())
  
     # ── 정합성 검증 ──
     errors = {}
     name_err = validate_name(name)
-    if name_err:   errors["name"]  = name_err
+    if name_err:  errors["name"]  = name_err
     birth_err = validate_birth(birth)
-    if birth_err:  errors["birth"] = birth_err
+    if birth_err: errors["birth"] = birth_err
     phone_err = validate_phone(phone)
-    if phone_err:  errors["phone"] = phone_err
+    if phone_err: errors["phone"] = phone_err
     email_err = validate_email(email)
-    if email_err:  errors["email"] = email_err
+    if email_err: errors["email"] = email_err
  
     if errors:
-        return templates.TemplateResponse(request, "apply.html", {
+        return render(request, "apply.html", {
             "user_id": user_id,
             "errors": errors,
+            "values": {"name": name, "birth": birth, "phone": phone, "email": email, "coverage": coverage}
+        })
+ 
+    # ── 동일 고객 중복 청약 방지 (성명 + 생년월일 기준) ──
+    db = SessionLocal()
+    duplicate = db.query(Application).filter(
+        Application.name  == name,
+        Application.birth == birth
+    ).first()
+    db.close()
+ 
+    if duplicate:
+        return render(request, "apply.html", {
+            "user_id": user_id,
+            "errors": {
+                "name": "동일한 성명과 생년월일로 이미 청약이 완료된 고객입니다.",
+                "birth": " "   # 생년월일 필드에도 빨간 테두리 표시
+            },
             "values": {"name": name, "birth": birth, "phone": phone, "email": email, "coverage": coverage}
         })
  
@@ -281,11 +316,6 @@ async def apply_submit(
         db.commit()
     except Exception:
         db.rollback()
-        # unique 제약 조건 위반 → 이미 청약된 경우
-        existing = db.query(Application).filter(Application.user_id == user_id).first()
-        db.close()
-        if existing:
-            return RedirectResponse(url=f"/complete?receipt={existing.receipt}", status_code=302)
         raise HTTPException(status_code=500, detail="청약 처리 중 오류가 발생했습니다.")
     finally:
         db.close()
@@ -297,10 +327,9 @@ async def apply_submit(
 async def loading_page(request: Request, receipt: str):
     if not get_session_user(request):
         return RedirectResponse(url="/")
-    # receipt 형식 검증 (파라미터 변조 방지)
     if not re.fullmatch(r"INS-\d{8}", receipt):
         raise HTTPException(status_code=400, detail="올바르지 않은 접수번호입니다.")
-    return templates.TemplateResponse(request, "loading.html", {"receipt": receipt})
+    return render(request, "loading.html", {"receipt": receipt})
  
  
 @app.get("/complete", response_class=HTMLResponse)
@@ -312,7 +341,6 @@ async def complete_page(request: Request, receipt: str):
         raise HTTPException(status_code=400, detail="올바르지 않은 접수번호입니다.")
  
     db = SessionLocal()
-    # 본인 청약 데이터만 조회 (다른 사용자 데이터 접근 차단)
     data = db.query(Application).filter(
         Application.receipt == receipt,
         Application.user_id == user_id
@@ -322,7 +350,7 @@ async def complete_page(request: Request, receipt: str):
     if not data:
         raise HTTPException(status_code=403, detail="접근 권한이 없습니다.")
  
-    return templates.TemplateResponse(request, "complete.html", {"data": data})
+    return render(request, "complete.html", {"data": data})
  
  
 @app.get("/logout")

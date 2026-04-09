@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AXA 손해보험 - 로그인</title>
+  <title>한울생명 - 로그인</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -93,10 +93,13 @@
       <div class="logo-icon">
         <svg viewBox="0 0 24 24"><path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z"/></svg>
       </div>
-      <h1>AXA 손해보험</h1>
+      <h1>한울생명</h1>
       <p>온라인 보험 청약 서비스</p>
     </div>
  
+    {% if success %}
+    <div style="background:#e8f5e9;border:1px solid #a5d6a7;color:#2e7d32;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px">{{ success }}</div>
+    {% endif %}
     {% if error %}
     <div class="error">{{ error }}</div>
     {% endif %}
@@ -114,6 +117,7 @@
     </form>
  
     <div class="hint">테스트 계정: <span>admin / 1234</span></div>
+    <div style="text-align:center;margin-top:14px;font-size:13px;color:#888">계정이 없으신가요? <a href="/register" style="color:#185FA5;font-weight:500;text-decoration:none">회원가입</a></div>
   </div>
 </body>
 </html>
