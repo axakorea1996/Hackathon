@@ -137,7 +137,7 @@ async def add_security_headers(request: Request, call_next):
     # 불필요한 서버 정보 숨기기
     response.headers["Server"] = "webserver"
     # 콘텐츠 보안 정책
-    response.headers["Content-Security-Policy"] = "default-src 'self'; style-src 'self' 'unsafe-inline'"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'"
     return response
  
  
