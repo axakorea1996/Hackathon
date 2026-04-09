@@ -35,6 +35,18 @@ def generate_receipt_number():
 @app.get("/", response_class=HTMLResponse)
 async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
+
+    # login_page 에러시
+    return templates.TemplateResponse(request, "login.html", {"error": "아이디 또는 비밀번호가 올바르지 않습니다."})
+
+    # apply_page
+    return templates.TemplateResponse(request, "apply.html", {"user_id": user_id})
+
+    # loading_page
+    return templates.TemplateResponse(request, "loading.html", {"receipt": receipt})
+
+    # complete_page
+    return templates.TemplateResponse(request, "complete.html", {"data": app_data})
  
  
 @app.post("/login")
