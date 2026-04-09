@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AXA 손해보험- 보험 청약</title>
+  <title>한울생명 - 보험 청약</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; min-height: 100vh; padding: 32px 16px; }
@@ -15,38 +15,44 @@
     .card-title { font-size: 20px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
     .card-sub { font-size: 13px; color: #888; margin-bottom: 28px; }
     .section-label { font-size: 11px; font-weight: 700; color: #185FA5; letter-spacing: .08em; text-transform: uppercase; margin: 24px 0 12px; }
-    .section-label:first-of-type { margin-top: 0; }
     .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .field { margin-bottom: 14px; }
     .field label { display: block; font-size: 13px; color: #555; margin-bottom: 5px; font-weight: 500; }
-    .field input, .field select {
+    .field input {
       width: 100%; padding: 10px 13px;
       border: 1.5px solid #e0e0e0; border-radius: 10px;
       font-size: 14px; outline: none; transition: border-color .2s;
       color: #1a1a2e; background: white;
     }
-    .field input:focus, .field select:focus { border-color: #185FA5; }
+    .field input:focus { border-color: #185FA5; }
     .field input.is-error { border-color: #e74c3c; background: #fff8f8; }
-    .field-error { font-size: 12px; color: #e74c3c; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
-    .field-error::before { content: "!"; background: #e74c3c; color: white; border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+    .field-error { font-size: 12px; color: #e74c3c; margin-top: 5px; display: flex; align-items: center; gap: 5px; }
+    .field-error::before { content: "!"; background: #e74c3c; color: white; border-radius: 50%; width: 15px; height: 15px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
     .coverage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
     .cov-label { border: 2px solid #e8edf2; border-radius: 12px; padding: 14px; cursor: pointer; transition: all .2s; display: flex; flex-direction: column; gap: 4px; }
     .cov-label input { display: none; }
     .cov-label .cov-name { font-size: 14px; font-weight: 600; color: #1a1a2e; }
     .cov-label .cov-price { font-size: 12px; color: #888; }
-    .cov-label:has(input:checked) { border-color: #185FA5; background: #f0f6ff; }
-    .cov-label:has(input:checked) .cov-name { color: #185FA5; }
+    .cov-label.selected { border-color: #185FA5; background: #f0f6ff; }
+    .cov-label.selected .cov-name { color: #185FA5; }
     .agree-box { background: #f7f9fc; border-radius: 10px; padding: 16px; margin-top: 8px; }
-    .agree-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #eee; font-size: 13px; color: #444; }
+    .agree-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 13px; color: #444; cursor: pointer; }
     .agree-row:last-child { border-bottom: none; }
-    .agree-row input[type=checkbox] { width: 16px; height: 16px; accent-color: #185FA5; flex-shrink: 0; }
+    .agree-row input[type=checkbox] { width: 17px; height: 17px; accent-color: #185FA5; flex-shrink: 0; cursor: pointer; }
+    .agree-error { font-size: 12px; color: #e74c3c; margin-top: 8px; display: none; }
     .btn { width: 100%; padding: 14px; background: #185FA5; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; transition: background .2s; margin-top: 24px; }
     .btn:hover { background: #0C447C; }
+ 
+    .already-box { text-align: center; padding: 24px 0; }
+    .already-icon { width: 64px; height: 64px; background: #fff8e1; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px; font-size: 28px; color: #f59e0b; font-weight: 700; }
+    .already-title { font-size: 18px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; }
+    .already-desc { font-size: 13px; color: #888; line-height: 1.6; margin-bottom: 20px; }
+    .already-btn { display: inline-block; padding: 10px 28px; background: #185FA5; color: white; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 14px; }
   </style>
 </head>
 <body>
   <div class="top-bar">
-    <div class="brand">AXA 손해보험</div>
+    <div class="brand">한울생명</div>
     <div>
       <span class="user">{{ user_id }}님</span>
       <a href="/logout">로그아웃</a>
@@ -54,26 +60,31 @@
   </div>
  
   <div class="card">
+ 
     {% if already_applied %}
-    <div style="text-align:center;padding:20px 0">
-      <div style="width:60px;height:60px;background:#fff8e1;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:28px">!</div>
-      <div style="font-size:18px;font-weight:700;color:#1a1a2e;margin-bottom:8px">이미 청약이 완료된 계정입니다</div>
-      <div style="font-size:13px;color:#888;margin-bottom:20px">동일한 계정으로 중복 청약은 불가합니다.<br>접수번호: <strong style="color:#185FA5">{{ receipt }}</strong></div>
-      <a href="/complete?receipt={{ receipt }}" style="display:inline-block;padding:10px 28px;background:#185FA5;color:white;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px">청약 내역 확인</a>
+    <div class="already-box">
+      <div class="already-icon">!</div>
+      <div class="already-title">이미 청약이 완료된 계정입니다</div>
+      <div class="already-desc">
+        동일한 계정으로 중복 청약은 불가합니다.<br>
+        접수번호: <strong style="color:#185FA5">{{ receipt }}</strong>
+      </div>
+      <a href="/complete?receipt={{ receipt }}" class="already-btn">청약 내역 확인</a>
     </div>
+ 
     {% else %}
     <div class="card-title">보험 청약 신청</div>
     <div class="card-sub">아래 정보를 입력하고 보험에 가입하세요</div>
  
-    <form method="post" action="/apply" onsubmit="return validateForm()">
+    <form id="apply-form" method="post" action="/apply">
  
       <div class="section-label">계약자 정보</div>
  
       <div class="field">
         <label>성명</label>
-        <input type="text" name="name" placeholder="홍길동"
+        <input type="text" id="name" name="name" placeholder="홍길동"
                value="{{ values.name if values else '' }}"
-               class="{{ 'is-error' if errors and errors.name else '' }}" required>
+               class="{{ 'is-error' if errors and errors.name else '' }}">
         {% if errors and errors.name %}
         <div class="field-error">{{ errors.name }}</div>
         {% endif %}
@@ -82,18 +93,18 @@
       <div class="row2">
         <div class="field">
           <label>생년월일</label>
-          <input type="text" name="birth" placeholder="19900101" maxlength="8"
+          <input type="text" id="birth" name="birth" placeholder="19900101" maxlength="8"
                  value="{{ values.birth if values else '' }}"
-                 class="{{ 'is-error' if errors and errors.birth else '' }}" required>
+                 class="{{ 'is-error' if errors and errors.birth else '' }}">
           {% if errors and errors.birth %}
           <div class="field-error">{{ errors.birth }}</div>
           {% endif %}
         </div>
         <div class="field">
           <label>연락처</label>
-          <input type="text" name="phone" placeholder="010-0000-0000"
+          <input type="text" id="phone" name="phone" placeholder="010-0000-0000"
                  value="{{ values.phone if values else '' }}"
-                 class="{{ 'is-error' if errors and errors.phone else '' }}" required>
+                 class="{{ 'is-error' if errors and errors.phone else '' }}">
           {% if errors and errors.phone %}
           <div class="field-error">{{ errors.phone }}</div>
           {% endif %}
@@ -102,32 +113,32 @@
  
       <div class="field">
         <label>이메일</label>
-        <input type="text" name="email" placeholder="example@email.com"
+        <input type="text" id="email" name="email" placeholder="example@email.com"
                value="{{ values.email if values else '' }}"
-               class="{{ 'is-error' if errors and errors.email else '' }}" required>
+               class="{{ 'is-error' if errors and errors.email else '' }}">
         {% if errors and errors.email %}
         <div class="field-error">{{ errors.email }}</div>
         {% endif %}
       </div>
  
       <div class="section-label">보장 선택</div>
-      <div class="coverage-grid">
-        <label class="cov-label">
-          <input type="radio" name="coverage" value="기본형 (월 12,000원)" {% if values and values.coverage == '기본형 (월 12,000원)' %}checked{% endif %} required>
+      <div class="coverage-grid" id="coverage-grid">
+        <label class="cov-label {% if values and values.coverage == '기본형 (월 12,000원)' %}selected{% endif %}">
+          <input type="radio" name="coverage" value="기본형 (월 12,000원)" {% if values and values.coverage == '기본형 (월 12,000원)' %}checked{% endif %}>
           <span class="cov-name">기본형</span>
           <span class="cov-price">월 12,000원 · 암 진단비 포함</span>
         </label>
-        <label class="cov-label">
+        <label class="cov-label {% if values and values.coverage == '표준형 (월 20,500원)' %}selected{% endif %}">
           <input type="radio" name="coverage" value="표준형 (월 20,500원)" {% if values and values.coverage == '표준형 (월 20,500원)' %}checked{% endif %}>
           <span class="cov-name">표준형</span>
           <span class="cov-price">월 20,500원 · 암+입원일당</span>
         </label>
-        <label class="cov-label">
+        <label class="cov-label {% if values and values.coverage == '종합형 (월 31,200원)' %}selected{% endif %}">
           <input type="radio" name="coverage" value="종합형 (월 31,200원)" {% if values and values.coverage == '종합형 (월 31,200원)' %}checked{% endif %}>
           <span class="cov-name">종합형</span>
           <span class="cov-price">월 31,200원 · 전체 보장</span>
         </label>
-        <label class="cov-label">
+        <label class="cov-label {% if values and values.coverage == '실속형 (월 8,500원)' %}selected{% endif %}">
           <input type="radio" name="coverage" value="실속형 (월 8,500원)" {% if values and values.coverage == '실속형 (월 8,500원)' %}checked{% endif %}>
           <span class="cov-name">실속형</span>
           <span class="cov-price">월 8,500원 · 입원일당만</span>
@@ -136,40 +147,96 @@
  
       <div class="section-label">약관 동의</div>
       <div class="agree-box">
-        <div class="agree-row">
-          <input type="checkbox" id="ag-all" onchange="toggleAll(this)">
+        <div class="agree-row" onclick="toggleAll()">
+          <input type="checkbox" id="ag-all">
           <label for="ag-all" style="font-weight:600;cursor:pointer">전체 동의</label>
         </div>
-        <div class="agree-row">
-          <input type="checkbox" class="ag-item" required>
-          <label>개인정보 수집 및 이용 동의 (필수)</label>
+        <div class="agree-row" onclick="toggleItem('ag1')">
+          <input type="checkbox" id="ag1" class="ag-item">
+          <label for="ag1">개인정보 수집 및 이용 동의 (필수)</label>
         </div>
-        <div class="agree-row">
-          <input type="checkbox" class="ag-item" required>
-          <label>통신판매업 약관 동의 (필수)</label>
+        <div class="agree-row" onclick="toggleItem('ag2')">
+          <input type="checkbox" id="ag2" class="ag-item">
+          <label for="ag2">통신판매업 약관 동의 (필수)</label>
         </div>
-        <div class="agree-row">
-          <input type="checkbox" class="ag-item" required>
-          <label>청약 철회 안내 확인 (필수)</label>
+        <div class="agree-row" onclick="toggleItem('ag3')">
+          <input type="checkbox" id="ag3" class="ag-item">
+          <label for="ag3">청약 철회 안내 확인 (필수)</label>
         </div>
       </div>
+      <div class="agree-error" id="agree-error">필수 약관에 모두 동의해주세요.</div>
  
       <input type="hidden" name="agree" value="Y">
-      <button type="submit" class="btn">보험 가입하기</button>
+      <button type="button" class="btn" onclick="submitForm()">보험 가입하기</button>
     </form>
-  {% endif %}
+    {% endif %}
+ 
   </div>
  
   <script>
-    function toggleAll(el) {
-      document.querySelectorAll('.ag-item').forEach(c => c.checked = el.checked);
+    // ── 보장 선택 카드 토글 ──
+    document.querySelectorAll('.cov-label').forEach(label => {
+      label.addEventListener('click', () => {
+        document.querySelectorAll('.cov-label').forEach(l => l.classList.remove('selected'));
+        label.classList.add('selected');
+        label.querySelector('input').checked = true;
+      });
+    });
+ 
+    // ── 전체 동의 ──
+    function toggleAll() {
+      const allBox = document.getElementById('ag-all');
+      // 클릭 이벤트가 올라오면서 이미 상태가 바뀐 후이므로 현재 상태 기준으로 하위 동기화
+      const checked = allBox.checked;
+      document.querySelectorAll('.ag-item').forEach(c => c.checked = checked);
+      document.getElementById('agree-error').style.display = 'none';
     }
-    function validateForm() {
+ 
+    // ── 개별 항목 클릭 시 전체 동의 상태 동기화 ──
+    function toggleItem(id) {
+      const box = document.getElementById(id);
+      box.checked = !box.checked;
       const items = document.querySelectorAll('.ag-item');
-      for (let c of items) {
-        if (!c.checked) { alert('필수 약관에 모두 동의해주세요.'); return false; }
+      const allChecked = Array.from(items).every(c => c.checked);
+      document.getElementById('ag-all').checked = allChecked;
+      document.getElementById('agree-error').style.display = 'none';
+    }
+ 
+    // ── 폼 제출 검증 (JS로만 처리, HTML required 제거) ──
+    function submitForm() {
+      let valid = true;
+ 
+      // 필수 입력 확인
+      const fields = ['name', 'birth', 'phone', 'email'];
+      fields.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el.value.trim()) {
+          el.classList.add('is-error');
+          valid = false;
+        } else {
+          el.classList.remove('is-error');
+        }
+      });
+ 
+      // 보장 선택 확인
+      const coverage = document.querySelector('input[name="coverage"]:checked');
+      if (!coverage) {
+        alert('보장 항목을 선택해주세요.');
+        valid = false;
       }
-      return true;
+ 
+      // 약관 동의 확인
+      const items = document.querySelectorAll('.ag-item');
+      const allChecked = Array.from(items).every(c => c.checked);
+      if (!allChecked) {
+        document.getElementById('agree-error').style.display = 'block';
+        valid = false;
+      }
+ 
+      if (!valid) return;
+ 
+      // 서버 전송 (정합성 검증은 서버에서 한 번 더)
+      document.getElementById('apply-form').submit();
     }
   </script>
 </body>
