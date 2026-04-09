@@ -7,83 +7,40 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; min-height: 100vh; padding: 32px 16px; }
- 
-    .top-bar {
-      max-width: 640px; margin: 0 auto 24px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
+    .top-bar { max-width: 640px; margin: 0 auto 24px; display: flex; align-items: center; justify-content: space-between; }
     .top-bar .brand { font-size: 16px; font-weight: 700; color: #185FA5; }
     .top-bar .user { font-size: 13px; color: #888; }
     .top-bar a { font-size: 13px; color: #c0392b; text-decoration: none; margin-left: 12px; }
- 
-    .card {
-      background: white;
-      border-radius: 16px;
-      padding: 36px 32px;
-      max-width: 640px;
-      margin: 0 auto;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-    }
+    .card { background: white; border-radius: 16px; padding: 36px 32px; max-width: 640px; margin: 0 auto; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
     .card-title { font-size: 20px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
     .card-sub { font-size: 13px; color: #888; margin-bottom: 28px; }
- 
-    .section-label {
-      font-size: 11px; font-weight: 700; color: #185FA5;
-      letter-spacing: .08em; text-transform: uppercase;
-      margin: 24px 0 12px;
-    }
+    .section-label { font-size: 11px; font-weight: 700; color: #185FA5; letter-spacing: .08em; text-transform: uppercase; margin: 24px 0 12px; }
     .section-label:first-of-type { margin-top: 0; }
- 
     .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .field { margin-bottom: 14px; }
     .field label { display: block; font-size: 13px; color: #555; margin-bottom: 5px; font-weight: 500; }
     .field input, .field select {
       width: 100%; padding: 10px 13px;
-      border: 1.5px solid #e0e0e0;
-      border-radius: 10px; font-size: 14px;
-      outline: none; transition: border-color .2s;
+      border: 1.5px solid #e0e0e0; border-radius: 10px;
+      font-size: 14px; outline: none; transition: border-color .2s;
       color: #1a1a2e; background: white;
     }
     .field input:focus, .field select:focus { border-color: #185FA5; }
- 
+    .field input.is-error { border-color: #e74c3c; background: #fff8f8; }
+    .field-error { font-size: 12px; color: #e74c3c; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+    .field-error::before { content: "!"; background: #e74c3c; color: white; border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
     .coverage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
-    .cov-label {
-      border: 2px solid #e8edf2;
-      border-radius: 12px; padding: 14px;
-      cursor: pointer; transition: all .2s;
-      display: flex; flex-direction: column; gap: 4px;
-    }
+    .cov-label { border: 2px solid #e8edf2; border-radius: 12px; padding: 14px; cursor: pointer; transition: all .2s; display: flex; flex-direction: column; gap: 4px; }
     .cov-label input { display: none; }
     .cov-label .cov-name { font-size: 14px; font-weight: 600; color: #1a1a2e; }
     .cov-label .cov-price { font-size: 12px; color: #888; }
-    .cov-label:has(input:checked) {
-      border-color: #185FA5;
-      background: #f0f6ff;
-    }
+    .cov-label:has(input:checked) { border-color: #185FA5; background: #f0f6ff; }
     .cov-label:has(input:checked) .cov-name { color: #185FA5; }
- 
-    .agree-box {
-      background: #f7f9fc;
-      border-radius: 10px; padding: 16px;
-      margin-top: 8px;
-    }
-    .agree-row {
-      display: flex; align-items: center; gap: 10px;
-      padding: 7px 0;
-      border-bottom: 1px solid #eee;
-      font-size: 13px; color: #444;
-    }
+    .agree-box { background: #f7f9fc; border-radius: 10px; padding: 16px; margin-top: 8px; }
+    .agree-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #eee; font-size: 13px; color: #444; }
     .agree-row:last-child { border-bottom: none; }
     .agree-row input[type=checkbox] { width: 16px; height: 16px; accent-color: #185FA5; flex-shrink: 0; }
- 
-    .btn {
-      width: 100%; padding: 14px;
-      background: #185FA5; color: white;
-      border: none; border-radius: 12px;
-      font-size: 16px; font-weight: 700;
-      cursor: pointer; transition: background .2s;
-      margin-top: 24px;
-    }
+    .btn { width: 100%; padding: 14px; background: #185FA5; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; transition: background .2s; margin-top: 24px; }
     .btn:hover { background: #0C447C; }
   </style>
 </head>
@@ -97,50 +54,81 @@
   </div>
  
   <div class="card">
+    {% if already_applied %}
+    <div style="text-align:center;padding:20px 0">
+      <div style="width:60px;height:60px;background:#fff8e1;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:28px">!</div>
+      <div style="font-size:18px;font-weight:700;color:#1a1a2e;margin-bottom:8px">이미 청약이 완료된 계정입니다</div>
+      <div style="font-size:13px;color:#888;margin-bottom:20px">동일한 계정으로 중복 청약은 불가합니다.<br>접수번호: <strong style="color:#185FA5">{{ receipt }}</strong></div>
+      <a href="/complete?receipt={{ receipt }}" style="display:inline-block;padding:10px 28px;background:#185FA5;color:white;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px">청약 내역 확인</a>
+    </div>
+    {% else %}
     <div class="card-title">보험 청약 신청</div>
     <div class="card-sub">아래 정보를 입력하고 보험에 가입하세요</div>
  
     <form method="post" action="/apply" onsubmit="return validateForm()">
  
       <div class="section-label">계약자 정보</div>
+ 
       <div class="field">
         <label>성명</label>
-        <input type="text" name="name" placeholder="홍길동" required>
+        <input type="text" name="name" placeholder="홍길동"
+               value="{{ values.name if values else '' }}"
+               class="{{ 'is-error' if errors and errors.name else '' }}" required>
+        {% if errors and errors.name %}
+        <div class="field-error">{{ errors.name }}</div>
+        {% endif %}
       </div>
+ 
       <div class="row2">
         <div class="field">
           <label>생년월일</label>
-          <input type="text" name="birth" placeholder="19900101" maxlength="8" required>
+          <input type="text" name="birth" placeholder="19900101" maxlength="8"
+                 value="{{ values.birth if values else '' }}"
+                 class="{{ 'is-error' if errors and errors.birth else '' }}" required>
+          {% if errors and errors.birth %}
+          <div class="field-error">{{ errors.birth }}</div>
+          {% endif %}
         </div>
         <div class="field">
           <label>연락처</label>
-          <input type="text" name="phone" placeholder="010-0000-0000" required>
+          <input type="text" name="phone" placeholder="010-0000-0000"
+                 value="{{ values.phone if values else '' }}"
+                 class="{{ 'is-error' if errors and errors.phone else '' }}" required>
+          {% if errors and errors.phone %}
+          <div class="field-error">{{ errors.phone }}</div>
+          {% endif %}
         </div>
       </div>
+ 
       <div class="field">
         <label>이메일</label>
-        <input type="email" name="email" placeholder="example@email.com" required>
+        <input type="text" name="email" placeholder="example@email.com"
+               value="{{ values.email if values else '' }}"
+               class="{{ 'is-error' if errors and errors.email else '' }}" required>
+        {% if errors and errors.email %}
+        <div class="field-error">{{ errors.email }}</div>
+        {% endif %}
       </div>
  
       <div class="section-label">보장 선택</div>
       <div class="coverage-grid">
         <label class="cov-label">
-          <input type="radio" name="coverage" value="기본형 (월 12,000원)" required>
+          <input type="radio" name="coverage" value="기본형 (월 12,000원)" {% if values and values.coverage == '기본형 (월 12,000원)' %}checked{% endif %} required>
           <span class="cov-name">기본형</span>
           <span class="cov-price">월 12,000원 · 암 진단비 포함</span>
         </label>
         <label class="cov-label">
-          <input type="radio" name="coverage" value="표준형 (월 20,500원)">
+          <input type="radio" name="coverage" value="표준형 (월 20,500원)" {% if values and values.coverage == '표준형 (월 20,500원)' %}checked{% endif %}>
           <span class="cov-name">표준형</span>
           <span class="cov-price">월 20,500원 · 암+입원일당</span>
         </label>
         <label class="cov-label">
-          <input type="radio" name="coverage" value="종합형 (월 31,200원)">
+          <input type="radio" name="coverage" value="종합형 (월 31,200원)" {% if values and values.coverage == '종합형 (월 31,200원)' %}checked{% endif %}>
           <span class="cov-name">종합형</span>
           <span class="cov-price">월 31,200원 · 전체 보장</span>
         </label>
         <label class="cov-label">
-          <input type="radio" name="coverage" value="실속형 (월 8,500원)">
+          <input type="radio" name="coverage" value="실속형 (월 8,500원)" {% if values and values.coverage == '실속형 (월 8,500원)' %}checked{% endif %}>
           <span class="cov-name">실속형</span>
           <span class="cov-price">월 8,500원 · 입원일당만</span>
         </label>
@@ -169,6 +157,7 @@
       <input type="hidden" name="agree" value="Y">
       <button type="submit" class="btn">보험 가입하기</button>
     </form>
+  {% endif %}
   </div>
  
   <script>
