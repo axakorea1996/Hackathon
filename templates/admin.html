@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>한울생명 - 관리자</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; min-height: 100vh; padding: 32px 16px; }
+
+    .top-bar { max-width: 1000px; margin: 0 auto 24px; display: flex; align-items: center; justify-content: space-between; }
+    .top-bar .brand { font-size: 16px; font-weight: 700; color: #185FA5; }
+    .top-bar .right { display: flex; align-items: center; gap: 16px; font-size: 13px; }
+    .top-bar .badge { background: #e3f0ff; color: #185FA5; padding: 3px 10px; border-radius: 99px; font-weight: 600; font-size: 12px; }
+    .top-bar a { color: #c0392b; text-decoration: none; }
+
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 1000px; margin: 0 auto 20px; }
+    .sum-card { background: white; border-radius: 12px; padding: 18px 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .sum-label { font-size: 12px; color: #888; margin-bottom: 6px; }
+    .sum-value { font-size: 24px; font-weight: 700; color: #1a1a2e; }
+    .sum-value.blue { color: #185FA5; }
+    .sum-value.green { color: #2e7d32; }
+
+    .card { background: white; border-radius: 16px; padding: 24px; max-width: 1000px; margin: 0 auto; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .card-title { font-size: 16px; font-weight: 700; color: #1a1a2e; }
+
+    .search-box { display: flex; gap: 8px; }
+    .search-box input { padding: 7px 12px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 13px; outline: none; width: 200px; }
+    .search-box input:focus { border-color: #185FA5; }
+    .search-box select { padding: 7px 10px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 13px; outline: none; background: white; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead tr { background: #f7f9fc; }
+    th { padding: 10px 14px; text-align: left; font-weight: 600; color: #555; border-bottom: 1.5px solid #e8edf2; white-space: nowrap; }
+    td { padding: 11px 14px; border-bottom: 1px solid #f0f0f0; color: #333; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafbff; }
+
+    .badge-coverage { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+    .cov-basic  { background: #e3f0ff; color: #185FA5; }
+    .cov-std    { background: #e8f5e9; color: #2e7d32; }
+    .cov-full   { background: #fce4ec; color: #c62828; }
+    .cov-lite   { background: #fff8e1; color: #f57f17; }
+
+    .receipt-code { font-family: monospace; font-size: 12px; color: #185FA5; font-weight: 600; }
+
+    .empty { text-align: center; padding: 48px; color: #aaa; font-size: 14px; }
+
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+    .filter-btn { padding: 5px 14px; border: 1.5px solid #e0e0e0; border-radius: 99px; font-size: 12px; background: white; cursor: pointer; color: #555; transition: all .15s; }
+    .filter-btn.active { border-color: #185FA5; background: #e3f0ff; color: #185FA5; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <div class="brand">한울생명 관리자</div>
+    <div class="right">
+      <span class="badge">admin</span>
+      <a href="/apply">청약 화면</a>
+      <a href="/logout">로그아웃</a>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="sum-card">
+      <div class="sum-label">전체 청약 건수</div>
+      <div class="sum-value blue">{{ total }}건</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">기본형 / 표준형</div>
+      <div class="sum-value green">
+        {{ applications | selectattr('coverage', 'equalto', '기본형 (월 12,000원)') | list | length }}
+        /
+        {{ applications | selectattr('coverage', 'equalto', '표준형 (월 20,500원)') | list | length }}건
+      </div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">종합형 / 실속형</div>
+      <div class="sum-value">
+        {{ applications | selectattr('coverage', 'equalto', '종합형 (월 31,200원)') | list | length }}
+        /
+        {{ applications | selectattr('coverage', 'equalto', '실속형 (월 8,500원)') | list | length }}건
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">청약 신청 목록</div>
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="이름 또는 연락처 검색">
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <button class="filter-btn active" data-filter="전체">전체</button>
+      <button class="filter-btn" data-filter="기본형">기본형</button>
+      <button class="filter-btn" data-filter="표준형">표준형</button>
+      <button class="filter-btn" data-filter="종합형">종합형</button>
+      <button class="filter-btn" data-filter="실속형">실속형</button>
+    </div>
+
+    <div class="table-wrap">
+      {% if applications %}
+      <table id="app-table">
+        <thead>
+          <tr>
+            <th>접수번호</th>
+            <th>성명</th>
+            <th>생년월일</th>
+            <th>연락처</th>
+            <th>이메일</th>
+            <th>보장 선택</th>
+            <th>청약일시</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          {% for app in applications %}
+          <tr data-coverage="{{ app.coverage }}">
+            <td><span class="receipt-code">{{ app.receipt }}</span></td>
+            <td>{{ app.name }}</td>
+            <td>{{ app.birth }}</td>
+            <td>{{ app.phone }}</td>
+            <td>{{ app.email }}</td>
+            <td>
+              {% if '기본형' in app.coverage %}
+                <span class="badge-coverage cov-basic">기본형</span>
+              {% elif '표준형' in app.coverage %}
+                <span class="badge-coverage cov-std">표준형</span>
+              {% elif '종합형' in app.coverage %}
+                <span class="badge-coverage cov-full">종합형</span>
+              {% else %}
+                <span class="badge-coverage cov-lite">실속형</span>
+              {% endif %}
+              <span style="font-size:11px;color:#888;margin-left:4px">{{ app.coverage.split('(')[1].replace(')','') if '(' in app.coverage else '' }}</span>
+            </td>
+            <td style="color:#888;font-size:12px">{{ app.created_at.strftime('%Y-%m-%d %H:%M') if app.created_at else '-' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty">청약 신청 내역이 없습니다.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <script nonce="{{ csp_nonce }}">
+    // ── 검색 ─────────────────────────────────────────────
+    document.getElementById('search-input').addEventListener('input', function() {
+      filterTable();
+    });
+
+    // ── 보장 필터 ─────────────────────────────────────────
+    document.querySelectorAll('.filter-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.filter-btn').forEach(function(b) {
+          b.classList.remove('active');
+        });
+        btn.classList.add('active');
+        filterTable();
+      });
+    });
+
+    function filterTable() {
+      var keyword = document.getElementById('search-input').value.toLowerCase();
+      var activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+      var rows = document.querySelectorAll('#table-body tr');
+
+      rows.forEach(function(row) {
+        var text = row.textContent.toLowerCase();
+        var coverage = row.dataset.coverage || '';
+
+        var matchSearch = keyword === '' || text.includes(keyword);
+        var matchFilter = activeFilter === '전체' || coverage.includes(activeFilter);
+
+        row.style.display = (matchSearch && matchFilter) ? '' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>

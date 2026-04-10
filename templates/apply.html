@@ -48,7 +48,7 @@
     <div class="brand">한울생명</div>
     <div>
       <span class="user">{{ user_id }}님</span>
-      <a href="/logout" id="logout-link">로그아웃</a>
+      {% if user_id == "admin" %}<a href="/admin" style="color:#185FA5;margin-right:8px">관리자</a>{% endif %}<a href="/logout" id="logout-link">로그아웃</a>
     </div>
   </div>
 

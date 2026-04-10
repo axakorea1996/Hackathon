@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import create_engine, Column, String, DateTime
+from sqlalchemy import create_engine, Column, String, DateTime, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import random, string, os, re, time, html, secrets, logging, traceback
@@ -51,6 +51,18 @@ def init_users():
     db.close()
 
 init_users()
+
+# ── DB 마이그레이션 (최초 1회 실행) ──────────────────────
+def migrate():
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE applications DROP CONSTRAINT IF EXISTS applications_user_id_key"))
+            conn.commit()
+            logger.info("마이그레이션 완료: applications_user_id_key 제거")
+    except Exception as e:
+        logger.warning("마이그레이션 건너뜀: %s", str(e))
+
+migrate()
 
 sessions = {}
 
@@ -356,6 +368,25 @@ async def complete_page(request: Request, receipt: str):
 
     return render(request, "complete.html", {"data": data})
 
+
+
+# ── 라우트: 관리자 청약 목록 ──────────────────────────────
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_page(request: Request):
+    user_id = get_session_user(request)
+    if not user_id:
+        return RedirectResponse(url="/")
+    if user_id != "admin":
+        raise HTTPException(status_code=403, detail="관리자만 접근 가능합니다.")
+
+    db = SessionLocal()
+    applications = db.query(Application).order_by(Application.created_at.desc()).all()
+    db.close()
+
+    return render(request, "admin.html", {
+        "applications": applications,
+        "total": len(applications)
+    })
 
 @app.get("/logout")
 async def logout(request: Request):
