@@ -1,0 +1,60 @@
+name: AI Test Automation
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  ai-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install fastapi uvicorn httpx pytest openai PyGithub
+          pip install -r requirements.txt
+
+      - name: Extract diff
+        run: |
+          git diff origin/main...HEAD -- '*.py' > diff.txt
+          cat diff.txt
+
+      - name: Generate test cases via AI
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python .github/scripts/generate_tests.py
+
+      - name: Run generated tests
+        id: run_tests
+        run: |
+          cat generated_tests.py
+          pytest generated_tests.py -v 2>&1 | tee test_output.txt
+          echo "test_result=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Notify test result to PR (pass)
+        if: steps.run_tests.outputs.test_result == '0'
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: python .github/scripts/notify_test_result.py pass
+
+      - name: Notify test result to PR (fail)
+        if: steps.run_tests.outputs.test_result != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: python .github/scripts/notify_test_result.py fail
