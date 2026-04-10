@@ -23,113 +23,19 @@ jobs:
       - name: Extract diff
         run: |
           git diff origin/main...HEAD -- '*.py' '*.html' '*.yml' > diff.txt
-          echo "=== 변경사항 ==="
           cat diff.txt
+
+      - name: Install dependencies
+        run: pip install openai PyGithub
 
       - name: AI Code Review via OpenRouter
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-        run: |
-          pip install openai
-
-          python3 << 'PYEOF'
-          import os
-          import openai
-
-          with open("diff.txt", "r") as f:
-              diff = f.read()
-
-          if not diff.strip():
-              review = "변경사항이 없습니다."
-          else:
-              client = openai.OpenAI(
-                  api_key=os.environ["OPENROUTER_API_KEY"],
-                  base_url="https://openrouter.ai/api/v1"
-              )
-
-              response = client.chat.completions.create(
-                  model="google/gemma-4-31b-it:free",
-                  messages=[
-                      {
-                          "role": "user",
-                          "content": f"""다음 코드 변경사항을 리뷰해주세요.
-
-리뷰 항목:
-1. 버그 또는 잠재적 오류
-2. 보안 취약점
-3. 코드 품질 및 가독성
-4. 개선 제안
-
-변경사항:
-{diff[:6000]}
-
-한국어로 작성해주세요. 마크다운 형식으로 작성해주세요."""
-                      }
-                  ],
-                  max_tokens=2000
-              )
-
-              review = response.choices[0].message.content
-              print("=== AI 리뷰 결과 ===")
-              print(review)
-
-          with open("review_result.txt", "w") as f:
-              f.write(review)
-          PYEOF
+        run: python .github/scripts/ai_review.py
 
       - name: Create or Update PR
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_SHA: ${{ github.sha }}
-        run: |
-          pip install PyGithub
-
-          python3 << 'PYEOF'
-          import os
-          from github import Github
-
-          token     = os.environ["GH_TOKEN"]
-          repo_name = os.environ["GITHUB_REPOSITORY"]
-          sha       = os.environ["GITHUB_SHA"][:7]
-
-          with open("review_result.txt", "r") as f:
-              review = f.read()
-
-          g    = Github(token)
-          repo = g.get_repo(repo_name)
-
-          existing_prs = repo.get_pulls(state="open", base="main", head="dev")
-          existing_pr  = next(iter(existing_prs), None)
-
-          pr_body = f"""## AI 코드 리뷰 결과
-
-> 이 PR은 `dev` 브랜치 push를 감지하여 자동 생성되었습니다.
-> 커밋: `{sha}` | 리뷰 모델: `google/gemma-4-31b-it`
-
----
-
-{review}
-
----
-
-### 배포 절차
-1. 위 리뷰 내용 확인
-2. 문제 없으면 **Approve** 후 **Merge** 클릭
-3. main 머지 시 Render 자동 배포 시작
-"""
-
-          if existing_pr:
-              existing_pr.create_issue_comment(
-                  f"## 새 커밋 `{sha}` AI 리뷰 결과\n\n{review}"
-              )
-              print(f"기존 PR #{existing_pr.number} 에 코멘트 추가: {existing_pr.html_url}")
-          else:
-              pr = repo.create_pull(
-                  title=f"[AI 리뷰] dev → main ({sha})",
-                  body=pr_body,
-                  head="dev",
-                  base="main"
-              )
-              print(f"PR 생성 완료: {pr.html_url}")
-          PYEOF
+        run: python .github/scripts/create_pr.py
