@@ -1,0 +1,41 @@
+name: AI Code Review & Auto PR
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  ai-review-and-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Extract diff
+        run: |
+          git diff origin/main...HEAD -- '*.py' '*.html' '*.yml' > diff.txt
+          cat diff.txt
+
+      - name: Install dependencies
+        run: pip install openai PyGithub
+
+      - name: AI Code Review via OpenRouter
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python .github/scripts/ai_review.py
+
+      - name: Create or Update PR
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: python .github/scripts/create_pr.py
