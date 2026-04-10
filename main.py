@@ -146,9 +146,9 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["Server"] = "webserver"
     response.headers["Content-Security-Policy"] = (
-        f"default-src 'self'; "
-        f"style-src 'self' 'unsafe-inline'; "
-        f"script-src 'self' 'nonce-{nonce}'"
+     "default-src 'self'; "
+     "style-src 'self' 'unsafe-inline'; "
+     "script-src 'self' 'unsafe-inline'"
     )
     return response
 
