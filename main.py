@@ -316,6 +316,7 @@ async def apply_submit(
         db.commit()
     except Exception:
         db.rollback()
+        print(f"DB 저장 오류: {e}")
         raise HTTPException(status_code=500, detail="청약 처리 중 오류가 발생했습니다.")
     finally:
         db.close()
