@@ -32,10 +32,12 @@ pr_body = f"""## AI 코드 리뷰 결과
 """
 
 if existing_pr:
+    # 기존 PR 본문도 최신 리뷰로 업데이트
+    existing_pr.edit(body=pr_body)
     existing_pr.create_issue_comment(
         f"## 새 커밋 `{sha}` AI 리뷰 결과\n\n{review}"
     )
-    print(f"기존 PR #{existing_pr.number} 에 코멘트 추가: {existing_pr.html_url}")
+    print(f"PR #{existing_pr.number} 본문 업데이트 + 코멘트 추가: {existing_pr.html_url}")
 else:
     pr = repo.create_pull(
         title=f"[AI 리뷰] dev → main ({sha})",
