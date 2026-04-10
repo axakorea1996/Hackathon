@@ -15,7 +15,7 @@ app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
 # ── DB 연결 ───────────────────────────────────────────────
-DATABASE_URL = os.environ.get("DATABASE_URL")
+DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./test.db")
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
@@ -146,9 +146,9 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["Server"] = "webserver"
     response.headers["Content-Security-Policy"] = (
-     "default-src 'self'; "
-     "style-src 'self' 'unsafe-inline'; "
-     "script-src 'self' 'unsafe-inline'"
+        f"default-src 'self'; "
+        f"style-src 'self' 'unsafe-inline'; "
+        f"script-src 'self' 'nonce-{nonce}'"
     )
     return response
 

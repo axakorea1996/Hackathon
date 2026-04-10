@@ -9,6 +9,9 @@ jobs:
   ai-test:
     runs-on: ubuntu-latest
 
+    env:
+      DATABASE_URL: sqlite:///./test.db
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -38,7 +41,6 @@ jobs:
       - name: Run generated tests
         run: |
           cat generated_tests.py
-          # 파이프 없이 직접 실행해야 종료 코드가 정확함
           set +e
           pytest generated_tests.py -v > test_output.txt 2>&1
           TEST_EXIT=$?
