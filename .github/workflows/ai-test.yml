@@ -1,0 +1,61 @@
+name: AI Test Automation
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  ai-test:
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: sqlite:///./test.db
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install fastapi uvicorn httpx pytest openai PyGithub
+          pip install -r requirements.txt
+
+      - name: Extract diff
+        run: |
+          git diff origin/main...HEAD -- '*.py' > diff.txt
+          cat diff.txt
+
+      - name: Generate test cases via AI
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python .github/scripts/generate_tests.py
+
+      - name: Run generated tests
+        run: |
+          cat generated_tests.py
+          set +e
+          pytest generated_tests.py -v > test_output.txt 2>&1
+          TEST_EXIT=$?
+          set -e
+          cat test_output.txt
+          echo "TEST_EXIT=$TEST_EXIT" >> $GITHUB_ENV
+
+      - name: Notify test result to PR
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          if [ "$TEST_EXIT" = "0" ]; then
+            python .github/scripts/notify_test_result.py pass
+          else
+            python .github/scripts/notify_test_result.py fail
+          fi
