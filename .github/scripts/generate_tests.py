@@ -4,7 +4,7 @@ import openai
 with open("diff.txt", "r") as f:
     diff = f.read()
 
-# main.py 전체 내용도 읽어서 컨텍스트 제공
+# main.py 전체를 읽어서 AI에게 전달
 try:
     with open("main.py", "r") as f:
         main_code = f.read()
@@ -27,33 +27,25 @@ response = client.chat.completions.create(
     messages=[
         {
             "role": "user",
-            "content": f"""아래는 FastAPI로 만든 보험 청약 웹 애플리케이션입니다.
-변경사항을 보고 실제 존재하는 엔드포인트에 대한 pytest 테스트를 작성해주세요.
+            "content": f"""아래 FastAPI 소스코드를 보고 pytest 테스트를 작성해주세요.
 
-[실제 엔드포인트 목록]
-- GET  /          → 로그인 페이지 (200 반환)
-- POST /login     → 로그인 처리 (성공 시 302, 실패 시 200)
-- GET  /apply     → 청약 페이지 (로그인 필요, 미로그인 시 302)
-- POST /apply     → 청약 제출
-- GET  /loading   → 로딩 페이지
-- GET  /complete  → 완료 페이지
-- GET  /logout    → 로그아웃
-- GET  /admin     → 관리자 페이지 (admin 계정만)
-- GET  /register  → 회원가입 페이지
-- POST /register  → 회원가입 처리
-
-[테스트 작성 규칙]
+[중요 규칙]
+- HTML 응답에 파일명(login.html 등)은 포함되지 않으므로 절대 사용 금지
+- HTML 내용 확인 시 실제 렌더링된 텍스트 사용 (예: "한울생명", "로그인", "청약" 등)
+- content-type 확인 시 "text/html; charset=utf-8" 전체 문자열 포함 여부로 체크
+- 반드시 아래 main.py 소스코드에 있는 실제 파라미터명을 그대로 사용
+- Form 파라미터명은 소스코드에서 확인 후 정확히 사용 (임의로 바꾸지 말것)
+- FastAPI 리다이렉트는 302가 아닌 307일 수 있으므로 in [302, 307] 로 체크
+- 쿼리 파라미터가 필수인 엔드포인트는 반드시 포함해서 호출
 - from fastapi.testclient import TestClient 사용
 - from main import app 으로 임포트
-- TestClient(app) 으로 클라이언트 생성
-- 실제 존재하는 엔드포인트만 테스트
-- 각 함수에 한국어 docstring 작성
-- import 포함한 완전한 코드 출력
 - 마크다운 코드블록 없이 순수 Python 코드만 출력
-- DATABASE_URL 환경변수가 없을 수 있으므로 DB 연결 실패를 graceful하게 처리
+
+[main.py 소스코드]
+{main_code[:6000]}
 
 [변경사항]
-{diff[:4000]}
+{diff[:2000]}
 """
         }
     ],
