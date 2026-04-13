@@ -174,7 +174,7 @@ async def login(request: Request, user_id: str = Form(...), password: str = Form
     client_ip = request.client.host
     if is_rate_limited(client_ip):
         return render(request, "login.html", {
-            "error": "로그인 시도가 너무 많습니다. 1분 후 다시 시도해주세요."
+            "error": "로그인 시도가 너무 많습니다. 1분 후에  다시 시도해주세요."
         })
 
     user_id  = sanitize(user_id)
