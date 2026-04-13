@@ -163,7 +163,7 @@ def get_session_user(request: Request) -> str | None:
     return sessions[token]["user_id"]
 
 
-# ── 라우트: 로그인 ────────────────────────────────────────
+# ── 라우트: 로그인!! ────────────────────────────────────────
 @app.get("/", response_class=HTMLResponse)
 async def login_page(request: Request):
     return render(request, "login.html")
