@@ -36,6 +36,9 @@ response = client.chat.completions.create(
 - 반드시 아래 main.py 소스코드에 있는 실제 파라미터명을 그대로 사용
 - Form 파라미터명은 소스코드에서 확인 후 정확히 사용 (임의로 바꾸지 말것)
 - FastAPI 리다이렉트는 302가 아닌 307일 수 있으므로 in [302, 307] 로 체크
+- 리다이렉트 응답을 확인할 때는 반드시 follow_redirects=False 옵션 사용
+  예: client.post("/login", data={...}, follow_redirects=False)
+- follow_redirects=False 없이 호출하면 리다이렉트를 따라가서 최종 페이지 200이 반환됨
 - 쿼리 파라미터가 필수인 엔드포인트는 반드시 포함해서 호출
 - from fastapi.testclient import TestClient 사용
 - from main import app 으로 임포트
